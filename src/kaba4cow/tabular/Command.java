@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.prefs.Preferences;
 
 import kaba4cow.ascii.toolbox.files.TableFile;
-import kaba4cow.ascii.toolbox.files.TableFile.Table;
 import kaba4cow.ascii.toolbox.maths.Maths;
+import kaba4cow.ascii.toolbox.tools.Table;
 
 public enum Command {
 

@@ -17,8 +17,9 @@ import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.input.Mouse;
 import kaba4cow.ascii.toolbox.Colors;
-import kaba4cow.ascii.toolbox.files.TableFile.Table;
 import kaba4cow.ascii.toolbox.maths.Maths;
+import kaba4cow.ascii.toolbox.tools.Table;
+import kaba4cow.ascii.toolbox.tools.TableSorter;
 
 public class AsciiTabular implements MainProgram {
 
@@ -122,7 +123,24 @@ public class AsciiTabular implements MainProgram {
 		new GUIButton(menuFrame, -1, "Clear cell", new Consumer<Object>() {
 			@Override
 			public void accept(Object t) {
-				Command.getTable().removeItemString(tableRow, tableColumn);
+				if (tableRow == -1)
+					Command.getTable().setColumn(tableColumn, "");
+				else
+					Command.getTable().setItemString(tableRow, tableColumn, "");
+				guiMenu = false;
+			}
+		});
+		new GUIButton(menuFrame, -1, "Sort table " + Glyphs.RIGHTWARDS_ARROW, new Consumer<Object>() {
+			@Override
+			public void accept(Object t) {
+				TableSorter.sort(Command.getTable(), tableColumn, true);
+				guiMenu = false;
+			}
+		});
+		new GUIButton(menuFrame, -1, "Sort table " + Glyphs.LEFTWARDS_ARROW, new Consumer<Object>() {
+			@Override
+			public void accept(Object t) {
+				TableSorter.sort(Command.getTable(), tableColumn, false);
 				guiMenu = false;
 			}
 		});
@@ -191,13 +209,16 @@ public class AsciiTabular implements MainProgram {
 		if (Keyboard.isKeyDown(Keyboard.KEY_ESCAPE)) {
 			if (guiMenu)
 				guiMenu = false;
-			else
+			else {
+				tableColumn = -1;
+				tableRow = -1;
 				Command.closeTable();
+			}
 			return;
 		}
 
 		if (Mouse.isKeyDown(Mouse.RIGHT))
-			guiMenu = true;
+			guiMenu = !guiMenu;
 
 		if (guiMenu) {
 			menuFrame.update();
@@ -382,10 +403,10 @@ public class AsciiTabular implements MainProgram {
 			maxScrollX = x + 2 - Display.getWidth();
 
 		y += scrollY;
-		if (y - 5 < Display.getHeight())
+		if (y < Display.getHeight())
 			maxScrollY = 0;
 		else
-			maxScrollY = y + 4 - Display.getHeight();
+			maxScrollY = y + 5 - Display.getHeight();
 
 		if (guiMenu) {
 			BoxDrawer.disableCollision();
@@ -397,8 +418,7 @@ public class AsciiTabular implements MainProgram {
 	}
 
 	public static void main(String[] args) {
-		Engine.init("Table Editor", 60);
-		Display.createWindowed(50, 40);
+		Engine.init("Tabular", 60);
 		Display.createFullscreen();
 		Engine.start(new AsciiTabular());
 	}
