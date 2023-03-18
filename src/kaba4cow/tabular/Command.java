@@ -173,6 +173,8 @@ public enum Command {
 					output.append(String.format("%" + maxLength + "s | %9s | %6s", key, table.getColumns().size(),
 							table.getItems().size()));
 					output.append('\n');
+					output.append(String.format("%" + maxLength + "s | %9s | %6s", "", "", ""));
+					output.append('\n');
 				}
 				output.append('\n');
 			}
@@ -232,10 +234,10 @@ public enum Command {
 	private static TableFile project = null;
 	private static Table table = null;
 
-	private static Preferences preferences = Preferences.userNodeForPackage(Command.class);
-	private static int backgroundColor = preferences.getInt("color-b", 0x000);
-	private static int foregroundColor = preferences.getInt("color-f", 0xFFF);
-	private static File directory = new File(preferences.get("home", System.getProperty("user.dir")));
+	private static Preferences preferences;
+	private static int backgroundColor;
+	private static int foregroundColor;
+	private static File directory;
 
 	private static StringBuilder output = new StringBuilder();
 
@@ -243,6 +245,15 @@ public enum Command {
 		this.name = name;
 		this.parameters = parameters;
 		this.description = description;
+	}
+
+	static {
+		preferences = Preferences.userNodeForPackage(Command.class);
+		backgroundColor = preferences.getInt("color-b", 0x000);
+		foregroundColor = preferences.getInt("color-f", 0xFFF);
+		directory = new File(preferences.get("home", System.getProperty("user.dir")));
+		if (!directory.exists() || directory.isFile())
+			directory = new File(System.getProperty("user.dir"));
 	}
 
 	public abstract void execute(String[] parameters, int numParameters);

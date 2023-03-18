@@ -17,7 +17,6 @@ import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.input.Mouse;
 import kaba4cow.ascii.toolbox.Colors;
-import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.tools.Table;
 import kaba4cow.ascii.toolbox.tools.TableSorter;
 
@@ -35,7 +34,6 @@ public class AsciiTabular implements MainProgram {
 	private String text;
 
 	private int scroll;
-	private int newScroll;
 	private int maxScroll;
 
 	private int color = 0x000FFF;
@@ -60,7 +58,6 @@ public class AsciiTabular implements MainProgram {
 	@Override
 	public void init() {
 		scroll = 0;
-		newScroll = 0;
 		maxScroll = 0;
 
 		scrollX = 0;
@@ -162,10 +159,15 @@ public class AsciiTabular implements MainProgram {
 	}
 
 	public void updateConsole() {
-		newScroll = scroll - 2 * Mouse.getScroll();
+		scroll -= 2 * Mouse.getScroll();
+		if (scroll < 0)
+			scroll = 0;
+		if (scroll > maxScroll)
+			scroll = maxScroll;
 
 		if (Keyboard.isKeyDown(Keyboard.KEY_ENTER)) {
-			newScroll = maxScroll + 256;
+			scroll = Integer.MAX_VALUE;
+			maxScroll = Integer.MAX_VALUE;
 			if (Command.processCommand(text))
 				Engine.requestClose();
 			else
@@ -276,9 +278,9 @@ public class AsciiTabular implements MainProgram {
 		}
 
 		if (Keyboard.isKey(Keyboard.KEY_SHIFT_LEFT))
-			scrollX = scrollX - 6 * Mouse.getScroll();
+			scrollX -= 6 * Mouse.getScroll();
 		else
-			scrollY = scrollY - 3 * Mouse.getScroll();
+			scrollY -= 3 * Mouse.getScroll();
 
 		if (scrollX < 0)
 			scrollX = 0;
@@ -304,7 +306,7 @@ public class AsciiTabular implements MainProgram {
 		Display.setDrawCursor(false);
 
 		int x = 0;
-		int y = 0;
+		int y = -scroll;
 		for (int i = 0; i < output.length(); i++) {
 			char c = output.charAt(i);
 			if (c == '\n') {
@@ -313,7 +315,7 @@ public class AsciiTabular implements MainProgram {
 			} else if (c == '\t')
 				x += 4;
 			else
-				Drawer.drawChar(x++, y - scroll, c, color);
+				Drawer.drawChar(x++, y, c, color);
 
 			if (x >= Display.getWidth()) {
 				x = 0;
@@ -323,7 +325,7 @@ public class AsciiTabular implements MainProgram {
 
 		for (int i = 0; i < text.length(); i++) {
 			char c = text.charAt(i);
-			Drawer.drawChar(x++, y - scroll, c, color);
+			Drawer.drawChar(x++, y, c, color);
 
 			if (x >= Display.getWidth()) {
 				x = 0;
@@ -331,12 +333,11 @@ public class AsciiTabular implements MainProgram {
 			}
 		}
 
-		maxScroll = Maths.max(0, y - Display.getHeight() + 5);
-		if (newScroll < 0)
-			newScroll = 0;
-		if (newScroll > maxScroll)
-			newScroll = maxScroll;
-		scroll = newScroll;
+		y += scroll;
+		if (y < Display.getHeight())
+			maxScroll = 0;
+		else
+			maxScroll = y + 5 - Display.getHeight();
 	}
 
 	public void renderGUI() {
