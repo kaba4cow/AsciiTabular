@@ -99,14 +99,14 @@ public class AsciiTabular implements MainProgram {
 		new GUIButton(menuFrame, -1, "Add row", new Consumer<Object>() {
 			@Override
 			public void accept(Object t) {
-				Command.getTable().addItem("");
+				Command.getTable().addItem();
 				guiMenu = false;
 			}
 		});
 		new GUIButton(menuFrame, -1, "Insert row", new Consumer<Object>() {
 			@Override
 			public void accept(Object t) {
-				Command.getTable().insertItem(tableRow, "");
+				Command.getTable().insertItem(tableRow);
 				guiMenu = false;
 			}
 		});
@@ -277,19 +277,21 @@ public class AsciiTabular implements MainProgram {
 				tableColumn = Command.getTable().getColumns().size() - 1;
 		}
 
-		if (Keyboard.isKey(Keyboard.KEY_SHIFT_LEFT))
-			scrollX -= 6 * Mouse.getScroll();
-		else
-			scrollY -= 3 * Mouse.getScroll();
+		if (!guiMenu) {
+			if (Keyboard.isKey(Keyboard.KEY_SHIFT_LEFT))
+				scrollX -= 6 * Mouse.getScroll();
+			else
+				scrollY -= 3 * Mouse.getScroll();
 
-		if (scrollX < 0)
-			scrollX = 0;
-		else if (scrollX > maxScrollX)
-			scrollX = maxScrollX;
-		if (scrollY < 0)
-			scrollY = 0;
-		else if (scrollY > maxScrollY)
-			scrollY = maxScrollY;
+			if (scrollX < 0)
+				scrollX = 0;
+			else if (scrollX > maxScrollX)
+				scrollX = maxScrollX;
+			if (scrollY < 0)
+				scrollY = 0;
+			else if (scrollY > maxScrollY)
+				scrollY = maxScrollY;
+		}
 	}
 
 	@Override
