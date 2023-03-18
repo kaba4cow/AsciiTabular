@@ -294,6 +294,16 @@ public class AsciiTabular implements MainProgram {
 
 	@Override
 	public void render() {
+		int width = Command.getWindowWidth();
+		int height = Command.getWindowHeight();
+		if (Display.getWidth() != width || Display.getHeight() != height) {
+			if (width < 0 || height < 0) {
+				if (!Display.isFullscreen())
+					Display.createFullscreen();
+			} else
+				Display.createWindowed(width, height);
+		}
+
 		color = Colors.combine(Command.getBackgroundColor(), Command.getForegroundColor());
 		Display.setBackground(' ', color);
 		if (Command.getTable() == null)
@@ -420,7 +430,13 @@ public class AsciiTabular implements MainProgram {
 
 	public static void main(String[] args) {
 		Engine.init("Tabular", 60);
-		Display.createFullscreen();
+
+		int width = Command.getWindowWidth();
+		int height = Command.getWindowHeight();
+		if (width < 0 || height < 0)
+			Display.createFullscreen();
+		else
+			Display.createWindowed(width, height);
 		Engine.start(new AsciiTabular());
 	}
 

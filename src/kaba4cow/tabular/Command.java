@@ -34,6 +34,26 @@ public enum Command {
 			output.append('\n');
 		}
 	},
+	RESIZE("resize", "[width] [height]", "Resizes window (-1 for fullscreen)") {
+		@Override
+		public void execute(String[] parameters, int numParameters) {
+			if (invalidParameters(numParameters, 2))
+				return;
+
+			int w, h;
+
+			try {
+				w = Integer.parseInt(parameters[0]);
+				h = Integer.parseInt(parameters[1]);
+			} catch (NumberFormatException e) {
+				invalidParameters();
+				return;
+			}
+
+			windowWidth = w;
+			windowHeight = h;
+		}
+	},
 	COLOR_B("color-b", "[color]", "Sets background color (000-FFF)") {
 		@Override
 		public void execute(String[] parameters, int numParameters) {
@@ -106,6 +126,18 @@ public enum Command {
 				output.append("-> " + file.getName() + "\n");
 		}
 	},
+	PROJ_CREATE("proj-create", "[name]", "Creates new project with specified name") {
+		@Override
+		public void execute(String[] parameters, int numParameters) {
+			if (invalidParameters(numParameters, 1))
+				return;
+
+			project = new TableFile();
+			projectName = parameters[0];
+			table = null;
+			output.append("Project created\n");
+		}
+	},
 	PROJ_OPEN("proj-open", "[name]", "Opens a project with specified name") {
 		@Override
 		public void execute(String[] parameters, int numParameters) {
@@ -119,6 +151,7 @@ public enum Command {
 				project = TableFile.read(file);
 				projectName = file.getName();
 				table = null;
+				output.append("Project opened\n");
 			}
 		}
 	},
@@ -141,8 +174,10 @@ public enum Command {
 
 			if (project == null)
 				output.append("No project selected\n");
-			else
+			else {
 				projectName = parameters[0];
+				output.append("Project renamed\n");
+			}
 		}
 	},
 	PROJ_INFO("proj-info", "", "Prints information about current project") {
@@ -205,8 +240,28 @@ public enum Command {
 				output.append("No project selected\n");
 			else if (project.containsTable(parameters[0]))
 				output.append("Table already exists\n");
-			else
+			else {
 				project.addTable(parameters[0]);
+				output.append("Table added\n");
+			}
+		}
+	},
+	TABLE_RENAME("table-rename", "[old name] [new name]", "Renames table with specified name") {
+		@Override
+		public void execute(String[] parameters, int numParameters) {
+			if (invalidParameters(numParameters, 2))
+				return;
+
+			if (project == null)
+				output.append("No project selected\n");
+			else if (!project.containsTable(parameters[0]))
+				output.append("Table not found\n");
+			else if (project.containsTable(parameters[1]))
+				output.append("Table with this name already exists\n");
+			else {
+				project.renameTable(parameters[0], parameters[1]);
+				output.append("Table renamed\n");
+			}
 		}
 	},
 	TABLE_DELETE("table-delete", "[name]", "Deletes table with specified name") {
@@ -219,8 +274,10 @@ public enum Command {
 				output.append("No project selected\n");
 			else if (!project.containsTable(parameters[0]))
 				output.append("Table not found\n");
-			else
+			else {
 				project.getTables().remove(parameters[0]);
+				output.append("Table deleted\n");
+			}
 		}
 	};
 
@@ -237,6 +294,8 @@ public enum Command {
 	private static Preferences preferences;
 	private static int backgroundColor;
 	private static int foregroundColor;
+	private static int windowWidth;
+	private static int windowHeight;
 	private static File directory;
 
 	private static StringBuilder output = new StringBuilder();
@@ -251,6 +310,8 @@ public enum Command {
 		preferences = Preferences.userNodeForPackage(Command.class);
 		backgroundColor = preferences.getInt("color-b", 0x000);
 		foregroundColor = preferences.getInt("color-f", 0xFFF);
+		windowWidth = preferences.getInt("width", -1);
+		windowHeight = preferences.getInt("height", -1);
 		directory = new File(preferences.get("home", System.getProperty("user.dir")));
 		if (!directory.exists() || directory.isFile())
 			directory = new File(System.getProperty("user.dir"));
@@ -374,9 +435,19 @@ public enum Command {
 		return foregroundColor;
 	}
 
+	public static int getWindowWidth() {
+		return windowWidth;
+	}
+
+	public static int getWindowHeight() {
+		return windowHeight;
+	}
+
 	private static void savePreferences() {
 		preferences.put("color-b", Integer.toString(backgroundColor));
 		preferences.put("color-f", Integer.toString(foregroundColor));
+		preferences.put("width", Integer.toString(windowWidth));
+		preferences.put("height", Integer.toString(windowHeight));
 		preferences.put("home", directory.getAbsolutePath());
 	}
 
