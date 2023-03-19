@@ -1,7 +1,5 @@
 package kaba4cow.tabular;
 
-import java.awt.Toolkit;
-import java.awt.datatransfer.DataFlavor;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.function.Consumer;
@@ -14,6 +12,7 @@ import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
 import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
+import kaba4cow.ascii.input.Input;
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.input.Mouse;
 import kaba4cow.ascii.toolbox.Colors;
@@ -22,13 +21,8 @@ import kaba4cow.ascii.toolbox.tools.TableSorter;
 
 public class AsciiTabular implements MainProgram {
 
-	private static final char BACKSPACE = 0x0008;
-	private static final char DELETE = 0x007F;
-
 	private ArrayList<String> history;
 	private int index;
-
-	private StringBuilder builder;
 
 	private String output;
 	private String text;
@@ -69,7 +63,6 @@ public class AsciiTabular implements MainProgram {
 		history = new ArrayList<>();
 		index = 0;
 
-		builder = new StringBuilder();
 		Command.processCommand("");
 		output = "TABULAR by kaba4cow" + Command.getOutput();
 
@@ -170,41 +163,24 @@ public class AsciiTabular implements MainProgram {
 			maxScroll = Integer.MAX_VALUE;
 			if (Command.processCommand(text))
 				Engine.requestClose();
-			else
-				builder = new StringBuilder();
 			String cmd = Command.getOutput();
 			output += text + "\n" + cmd;
 			if (history.isEmpty() || !history.get(history.size() - 1).equalsIgnoreCase(text))
 				history.add(text);
+			text = "";
 			index = history.size();
 		} else if (!history.isEmpty() && Keyboard.isKeyDown(Keyboard.KEY_UP)) {
 			index--;
 			if (index < 0)
 				index = history.size() - 1;
-			builder = new StringBuilder(history.get(index));
+			text = history.get(index);
 		} else if (!history.isEmpty() && Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
 			index++;
 			if (index >= history.size())
 				index = 0;
-			builder = new StringBuilder(history.get(index));
-		} else if (Keyboard.isKey(Keyboard.KEY_CONTROL_LEFT) && Keyboard.isKeyDown(Keyboard.KEY_V)) {
-			try {
-				String data = (String) Toolkit.getDefaultToolkit().getSystemClipboard()
-						.getData(DataFlavor.stringFlavor);
-				data = data.replace('\t', ' ').replace('\r', ' ').replace('\n', ' ');
-				builder.append(data);
-			} catch (Exception e) {
-			}
-		} else if (Keyboard.getLastTyped() != null) {
-			char c = Keyboard.getLastTyped().getKeyChar();
-			if (c == BACKSPACE && builder.length() > 0)
-				builder.deleteCharAt(builder.length() - 1);
-			else if (c >= 32 && c < DELETE)
-				builder.append(c);
-			Keyboard.resetLastTyped();
-		}
-
-		text = builder.toString();
+			text = history.get(index);
+		} else
+			text = Input.typeString(text);
 	}
 
 	public void updateGUI() {
@@ -239,22 +215,8 @@ public class AsciiTabular implements MainProgram {
 				string = Command.getTable().getItemString(tableRow, tableColumn);
 			if (Keyboard.isKeyDown(Keyboard.KEY_DELETE))
 				string = "";
-			else if (Keyboard.isKey(Keyboard.KEY_CONTROL_LEFT) && Keyboard.isKeyDown(Keyboard.KEY_V)) {
-				try {
-					String data = (String) Toolkit.getDefaultToolkit().getSystemClipboard()
-							.getData(DataFlavor.stringFlavor);
-					data = data.replace('\t', ' ').replace('\r', ' ').replace('\n', ' ');
-					string += data;
-				} catch (Exception e) {
-				}
-			} else if (Keyboard.getLastTyped() != null) {
-				char c = Keyboard.getLastTyped().getKeyChar();
-				if (c == BACKSPACE && string.length() > 0)
-					string = string.substring(0, string.length() - 1);
-				else if (c >= 32 && c < DELETE)
-					string += c;
-				Keyboard.resetLastTyped();
-			}
+			else
+				string = Input.typeString(string);
 			if (tableRow == -1)
 				Command.getTable().setColumn(tableColumn, string);
 			else
@@ -278,7 +240,7 @@ public class AsciiTabular implements MainProgram {
 		}
 
 		if (!guiMenu) {
-			if (Keyboard.isKey(Keyboard.KEY_SHIFT_LEFT))
+			if (Mouse.isKey(Mouse.LEFT))
 				scrollX -= 6 * Mouse.getScroll();
 			else
 				scrollY -= 3 * Mouse.getScroll();
