@@ -206,7 +206,7 @@ public enum Command {
 				for (String key : tables.keySet()) {
 					Table table = tables.get(key);
 					output.append(String.format("%" + maxLength + "s | %9s | %6s", key, table.getColumns().size(),
-							table.getItems().size()));
+							table.rows()));
 					output.append('\n');
 					output.append(String.format("%" + maxLength + "s | %9s | %6s", "", "", ""));
 					output.append('\n');

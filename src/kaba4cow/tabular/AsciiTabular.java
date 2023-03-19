@@ -16,6 +16,7 @@ import kaba4cow.ascii.input.Input;
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.input.Mouse;
 import kaba4cow.ascii.toolbox.Colors;
+import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.tools.Table;
 import kaba4cow.ascii.toolbox.tools.TableSorter;
 
@@ -92,21 +93,21 @@ public class AsciiTabular implements MainProgram {
 		new GUIButton(menuFrame, -1, "Add row", new Consumer<Object>() {
 			@Override
 			public void accept(Object t) {
-				Command.getTable().addItem();
+				Command.getTable().addRow();
 				guiMenu = false;
 			}
 		});
 		new GUIButton(menuFrame, -1, "Insert row", new Consumer<Object>() {
 			@Override
 			public void accept(Object t) {
-				Command.getTable().insertItem(tableRow);
+				Command.getTable().insertRow(tableRow);
 				guiMenu = false;
 			}
 		});
 		new GUIButton(menuFrame, -1, "Delete row", new Consumer<Object>() {
 			@Override
 			public void accept(Object t) {
-				Command.getTable().removeItem(tableRow);
+				Command.getTable().removeRow(tableRow);
 				guiMenu = false;
 			}
 		});
@@ -116,7 +117,7 @@ public class AsciiTabular implements MainProgram {
 				if (tableRow == -1)
 					Command.getTable().setColumn(tableColumn, "");
 				else
-					Command.getTable().setItemString(tableRow, tableColumn, "");
+					Command.getTable().setCell(tableColumn, tableRow, "");
 				guiMenu = false;
 			}
 		});
@@ -212,7 +213,7 @@ public class AsciiTabular implements MainProgram {
 			if (tableRow == -1)
 				string = Command.getTable().getColumn(tableColumn);
 			else
-				string = Command.getTable().getItemString(tableRow, tableColumn);
+				string = Command.getTable().getCell(tableColumn, tableRow);
 			if (Keyboard.isKeyDown(Keyboard.KEY_DELETE))
 				string = "";
 			else
@@ -220,7 +221,7 @@ public class AsciiTabular implements MainProgram {
 			if (tableRow == -1)
 				Command.getTable().setColumn(tableColumn, string);
 			else
-				Command.getTable().setItemString(tableRow, tableColumn, string);
+				Command.getTable().setCell(tableColumn, tableRow, string);
 
 			if (Keyboard.isKeyDown(Keyboard.KEY_UP))
 				tableRow--;
@@ -240,7 +241,7 @@ public class AsciiTabular implements MainProgram {
 		}
 
 		if (!guiMenu) {
-			if (Mouse.isKey(Mouse.LEFT))
+			if (Keyboard.isKey(Keyboard.KEY_SHIFT_LEFT))
 				scrollX -= 6 * Mouse.getScroll();
 			else
 				scrollY -= 3 * Mouse.getScroll();
@@ -319,7 +320,7 @@ public class AsciiTabular implements MainProgram {
 
 		Table table = Command.getTable();
 		LinkedList<String> columns = table.getColumns();
-		LinkedList<LinkedList<String>> items = table.getItems();
+		LinkedList<Table.Row> rows = table.getRows();
 
 		int mX = Mouse.getTileX();
 		int mY = Mouse.getTileY();
@@ -328,13 +329,13 @@ public class AsciiTabular implements MainProgram {
 		newTableRow = -1;
 
 		int x = 0;
-		int y = 3 - scrollY;
-		for (int j = 0; j < items.size(); j++) {
-			LinkedList<String> item = items.get(j);
+		int y = 4 - scrollY;
+		for (int j = 0; j < rows.size(); j++) {
+			Table.Row item = rows.get(j);
 			x = -scrollX;
 			y += 2;
 			for (int i = 0; i < columns.size(); i++) {
-				int width = table.getColumnWidth(i) + 1;
+				int width = 2 + Maths.max(table.getColumnWidth(i), table.getColumn(i).length() / 2);
 				if (i >= item.size())
 					item.add("");
 				int textColor = (i == tableColumn && j == tableRow) ? Colors.swap(color) : color;
@@ -351,19 +352,20 @@ public class AsciiTabular implements MainProgram {
 			}
 		}
 
-		Drawer.fillRect(0, 0, Display.getWidth(), 4, false, ' ', color);
-		Drawer.drawLine(0, 4, Display.getWidth(), 4, Glyphs.BOX_DRAWINGS_DOUBLE_HORIZONTAL, color);
-		Drawer.drawString(0, 0, false, "TABLE [" + table.getName() + "] (ESCAPE to close)", color);
+		Drawer.fillRect(0, 0, Display.getWidth(), 5, false, Glyphs.SPACE, color);
+		Drawer.drawLine(0, 5, Display.getWidth(), 5, Glyphs.BOX_DRAWINGS_DOUBLE_HORIZONTAL, color);
+		Drawer.drawString(0, 0, false,
+				"TABLE [" + table.getName() + "] : " + table.columns() + " COLUMNS " + table.rows() + " ROWS", color);
 
 		x = -scrollX;
 		for (int i = 0; i < columns.size(); i++) {
-			int width = table.getColumnWidth(i) + 1;
+			int width = 2 + Maths.max(table.getColumnWidth(i), table.getColumn(i).length() / 2);
 			int textColor = (tableRow == -1 && i == tableColumn) ? Colors.swap(color) : color;
-			BoxDrawer.drawBox(x, 1, width, 2, false, color);
-			Drawer.drawLine(x + 1, 2, x + width - 1, 2, ' ', textColor);
-			Drawer.drawString(x + 1, 2, false, table.getColumn(i), textColor);
+			BoxDrawer.drawBox(x, 1, width, 3, false, color);
+			Drawer.fillRect(x + 1, 2, width - 1, 2, false, Glyphs.SPACE, textColor);
+			Drawer.drawString(x + 1, 2, false, width - 1, table.getColumn(i), textColor);
 
-			if (mY == 2 && mX > x && mX < x + width) {
+			if (mY >= 2 && mY <= 3 && mX > x && mX < x + width) {
 				newTableRow = -1;
 				newTableColumn = i;
 			}
@@ -381,7 +383,7 @@ public class AsciiTabular implements MainProgram {
 		if (y < Display.getHeight())
 			maxScrollY = 0;
 		else
-			maxScrollY = y + 5 - Display.getHeight();
+			maxScrollY = y + 6 - Display.getHeight();
 
 		if (guiMenu) {
 			BoxDrawer.disableCollision();
