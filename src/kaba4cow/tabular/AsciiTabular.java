@@ -1,8 +1,6 @@
 package kaba4cow.tabular;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.function.Consumer;
 
 import kaba4cow.ascii.MainProgram;
 import kaba4cow.ascii.core.Display;
@@ -10,199 +8,76 @@ import kaba4cow.ascii.core.Engine;
 import kaba4cow.ascii.drawing.drawers.BoxDrawer;
 import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
-import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.input.Input;
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.input.Mouse;
 import kaba4cow.ascii.toolbox.Colors;
+import kaba4cow.ascii.toolbox.files.TableFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.tools.Table;
-import kaba4cow.ascii.toolbox.tools.TableSorter;
+import kaba4cow.console.ConsoleProgram;
 
-public class AsciiTabular implements MainProgram {
+public class AsciiTabular extends ConsoleProgram implements MainProgram {
 
-	private ArrayList<String> history;
-	private int index;
-
-	private String output;
-	private String text;
-
-	private int scroll;
-	private int maxScroll;
-
-	private int color = 0x000FFF;
+	public static String projectName = null;
+	public static TableFile project = null;
+	public static Table table = null;
 
 	private int scrollX;
 	private int scrollY;
 	private int maxScrollX;
 	private int maxScrollY;
 
-	private int tableColumn;
-	private int tableRow;
-	private int newTableColumn;
-	private int newTableRow;
-	private boolean guiMenu;
+	private static int tableColumn = -1;
+	private static int tableRow = -1;
+	private static int newTableColumn = -1;
+	private static int newTableRow = -1;
+	private static boolean menu = false;
 
 	private GUIFrame menuFrame;
 
 	public AsciiTabular() {
-
+		super(AsciiTabular.class, "TABULAR by kaba4cow");
+		Commands.init();
 	}
 
 	@Override
 	public void init() {
-		scroll = 0;
-		maxScroll = 0;
-
 		scrollX = 0;
 		scrollY = 0;
-		guiMenu = false;
+		menu = false;
 
-		text = "";
-
-		history = new ArrayList<>();
-		index = 0;
-
-		Command.processCommand("");
-		output = "TABULAR by kaba4cow" + Command.getOutput();
-
-		menuFrame = new GUIFrame(color, false, false);
-		menuFrame.setTitle("Menu");
-		new GUIButton(menuFrame, -1, "Add column", new Consumer<Object>() {
-			@Override
-			public void accept(Object t) {
-				Command.getTable().addColumn("");
-				guiMenu = false;
-			}
-		});
-		new GUIButton(menuFrame, -1, "Insert column", new Consumer<Object>() {
-			@Override
-			public void accept(Object t) {
-				Command.getTable().insertColumn(tableColumn, "");
-				guiMenu = false;
-			}
-		});
-		new GUIButton(menuFrame, -1, "Delete column", new Consumer<Object>() {
-			@Override
-			public void accept(Object t) {
-				Command.getTable().removeColumn(tableColumn);
-				guiMenu = false;
-			}
-		});
-		new GUIButton(menuFrame, -1, "Add row", new Consumer<Object>() {
-			@Override
-			public void accept(Object t) {
-				Command.getTable().addRow();
-				guiMenu = false;
-			}
-		});
-		new GUIButton(menuFrame, -1, "Insert row", new Consumer<Object>() {
-			@Override
-			public void accept(Object t) {
-				Command.getTable().insertRow(tableRow);
-				guiMenu = false;
-			}
-		});
-		new GUIButton(menuFrame, -1, "Delete row", new Consumer<Object>() {
-			@Override
-			public void accept(Object t) {
-				Command.getTable().removeRow(tableRow);
-				guiMenu = false;
-			}
-		});
-		new GUIButton(menuFrame, -1, "Clear cell", new Consumer<Object>() {
-			@Override
-			public void accept(Object t) {
-				if (tableRow == -1)
-					Command.getTable().setColumn(tableColumn, "");
-				else
-					Command.getTable().setCell(tableColumn, tableRow, "");
-				guiMenu = false;
-			}
-		});
-		new GUIButton(menuFrame, -1, "Sort table " + Glyphs.RIGHTWARDS_ARROW, new Consumer<Object>() {
-			@Override
-			public void accept(Object t) {
-				TableSorter.sort(Command.getTable(), tableColumn, true);
-				guiMenu = false;
-			}
-		});
-		new GUIButton(menuFrame, -1, "Sort table " + Glyphs.LEFTWARDS_ARROW, new Consumer<Object>() {
-			@Override
-			public void accept(Object t) {
-				TableSorter.sort(Command.getTable(), tableColumn, false);
-				guiMenu = false;
-			}
-		});
-		new GUIButton(menuFrame, -1, "Save project", new Consumer<Object>() {
-			@Override
-			public void accept(Object t) {
-				Command.processCommand("proj-save");
-				guiMenu = false;
-			}
-		});
+		menuFrame = new MenuFrame();
 	}
 
 	@Override
 	public void update(float dt) {
-		if (Command.getTable() == null)
-			updateConsole();
+		if (table == null)
+			updateConsole(projectName);
 		else
 			updateGUI();
 	}
 
-	public void updateConsole() {
-		scroll -= 2 * Mouse.getScroll();
-		if (scroll < 0)
-			scroll = 0;
-		if (scroll > maxScroll)
-			scroll = maxScroll;
-
-		if (Keyboard.isKeyDown(Keyboard.KEY_ENTER)) {
-			scroll = Integer.MAX_VALUE;
-			maxScroll = Integer.MAX_VALUE;
-			if (Command.processCommand(text))
-				Engine.requestClose();
-			String cmd = Command.getOutput();
-			output += text + "\n" + cmd;
-			if (history.isEmpty() || !history.get(history.size() - 1).equalsIgnoreCase(text))
-				history.add(text);
-			text = "";
-			index = history.size();
-		} else if (!history.isEmpty() && Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-			index--;
-			if (index < 0)
-				index = history.size() - 1;
-			text = history.get(index);
-		} else if (!history.isEmpty() && Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-			index++;
-			if (index >= history.size())
-				index = 0;
-			text = history.get(index);
-		} else
-			text = Input.typeString(text);
-	}
-
 	public void updateGUI() {
 		if (Keyboard.isKeyDown(Keyboard.KEY_ESCAPE)) {
-			if (guiMenu)
-				guiMenu = false;
+			if (menu)
+				menu = false;
 			else {
 				tableColumn = -1;
 				tableRow = -1;
-				Command.closeTable();
+				table = null;
 			}
 			return;
 		}
 
 		if (Mouse.isKeyDown(Mouse.RIGHT))
-			guiMenu = !guiMenu;
+			menu = !menu;
 
-		if (guiMenu) {
+		if (menu) {
 			menuFrame.update();
 			if (Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
-				guiMenu = false;
+				menu = false;
 		} else if (Mouse.isKeyDown(Mouse.LEFT)) {
 			tableColumn = newTableColumn;
 			tableRow = newTableRow;
@@ -211,17 +86,17 @@ public class AsciiTabular implements MainProgram {
 		if (tableColumn != -1) {
 			String string;
 			if (tableRow == -1)
-				string = Command.getTable().getColumn(tableColumn);
+				string = table.getColumn(tableColumn);
 			else
-				string = Command.getTable().getCell(tableColumn, tableRow);
+				string = table.getCell(tableColumn, tableRow);
 			if (Keyboard.isKeyDown(Keyboard.KEY_DELETE))
 				string = "";
 			else
 				string = Input.typeString(string);
 			if (tableRow == -1)
-				Command.getTable().setColumn(tableColumn, string);
+				table.setColumn(tableColumn, string);
 			else
-				Command.getTable().setCell(tableColumn, tableRow, string);
+				table.setCell(tableColumn, tableRow, string);
 
 			if (Keyboard.isKeyDown(Keyboard.KEY_UP))
 				tableRow--;
@@ -236,11 +111,11 @@ public class AsciiTabular implements MainProgram {
 				tableRow = -1;
 			if (tableColumn < 0)
 				tableColumn = 0;
-			else if (tableColumn >= Command.getTable().getColumns().size())
-				tableColumn = Command.getTable().getColumns().size() - 1;
+			else if (tableColumn >= table.getColumns().size())
+				tableColumn = table.getColumns().size() - 1;
 		}
 
-		if (!guiMenu) {
+		if (!menu) {
 			if (Keyboard.isKey(Keyboard.KEY_SHIFT_LEFT))
 				scrollX -= 6 * Mouse.getScroll();
 			else
@@ -259,66 +134,16 @@ public class AsciiTabular implements MainProgram {
 
 	@Override
 	public void render() {
-		int width = Command.getWindowWidth();
-		int height = Command.getWindowHeight();
-		if (Display.getWidth() != width || Display.getHeight() != height) {
-			if (width < 0 || height < 0) {
-				if (!Display.isFullscreen())
-					Display.createFullscreen();
-			} else
-				Display.createWindowed(width, height);
-		}
-
-		color = Colors.combine(Command.getBackgroundColor(), Command.getForegroundColor());
-		Display.setBackground(' ', color);
-		if (Command.getTable() == null)
+		updateWindow();
+		if (table == null)
 			renderConsole();
 		else
 			renderGUI();
 	}
 
-	public void renderConsole() {
-		Display.setDrawCursor(false);
-
-		int x = 0;
-		int y = -scroll;
-		for (int i = 0; i < output.length(); i++) {
-			char c = output.charAt(i);
-			if (c == '\n') {
-				x = 0;
-				y++;
-			} else if (c == '\t')
-				x += 4;
-			else
-				Drawer.drawChar(x++, y, c, color);
-
-			if (x >= Display.getWidth()) {
-				x = 0;
-				y++;
-			}
-		}
-
-		for (int i = 0; i < text.length(); i++) {
-			char c = text.charAt(i);
-			Drawer.drawChar(x++, y, c, color);
-
-			if (x >= Display.getWidth()) {
-				x = 0;
-				y++;
-			}
-		}
-
-		y += scroll;
-		if (y < Display.getHeight())
-			maxScroll = 0;
-		else
-			maxScroll = y + 5 - Display.getHeight();
-	}
-
 	public void renderGUI() {
 		Display.setDrawCursor(true);
 
-		Table table = Command.getTable();
 		LinkedList<String> columns = table.getColumns();
 		LinkedList<Table.Row> rows = table.getRows();
 
@@ -338,8 +163,8 @@ public class AsciiTabular implements MainProgram {
 				int width = 2 + Maths.max(table.getColumnWidth(i), table.getColumn(i).length() / 2);
 				if (i >= item.size())
 					item.add("");
-				int textColor = (i == tableColumn && j == tableRow) ? Colors.swap(color) : color;
-				BoxDrawer.drawBox(x, y, width, 2, true, color);
+				int textColor = (i == tableColumn && j == tableRow) ? Colors.swap(consoleColor) : consoleColor;
+				BoxDrawer.drawBox(x, y, width, 2, true, consoleColor);
 				Drawer.drawLine(x + 1, y + 1, x + width - 1, y + 1, ' ', textColor);
 				Drawer.drawString(x + 1, y + 1, false, item.get(i), textColor);
 
@@ -352,16 +177,17 @@ public class AsciiTabular implements MainProgram {
 			}
 		}
 
-		Drawer.fillRect(0, 0, Display.getWidth(), 5, false, Glyphs.SPACE, color);
-		Drawer.drawLine(0, 5, Display.getWidth(), 5, Glyphs.BOX_DRAWINGS_DOUBLE_HORIZONTAL, color);
+		Drawer.fillRect(0, 0, Display.getWidth(), 5, false, Glyphs.SPACE, consoleColor);
+		Drawer.drawLine(0, 5, Display.getWidth(), 5, Glyphs.BOX_DRAWINGS_DOUBLE_HORIZONTAL, consoleColor);
 		Drawer.drawString(0, 0, false,
-				"TABLE [" + table.getName() + "] : " + table.columns() + " COLUMNS " + table.rows() + " ROWS", color);
+				"TABLE [" + table.getName() + "] : " + table.columns() + " COLUMNS " + table.rows() + " ROWS",
+				consoleColor);
 
 		x = -scrollX;
 		for (int i = 0; i < columns.size(); i++) {
 			int width = 2 + Maths.max(table.getColumnWidth(i), table.getColumn(i).length() / 2);
-			int textColor = (tableRow == -1 && i == tableColumn) ? Colors.swap(color) : color;
-			BoxDrawer.drawBox(x, 1, width, 3, false, color);
+			int textColor = (tableRow == -1 && i == tableColumn) ? Colors.swap(consoleColor) : consoleColor;
+			BoxDrawer.drawBox(x, 1, width, 3, false, consoleColor);
 			Drawer.fillRect(x + 1, 2, width - 1, 2, false, Glyphs.SPACE, textColor);
 			Drawer.drawString(x + 1, 2, false, width - 1, table.getColumn(i), textColor);
 
@@ -385,24 +211,29 @@ public class AsciiTabular implements MainProgram {
 		else
 			maxScrollY = y + 6 - Display.getHeight();
 
-		if (guiMenu) {
+		if (menu) {
 			BoxDrawer.disableCollision();
-			menuFrame.setColor(color);
+			menuFrame.setColor(consoleColor);
 			menuFrame.render(Display.getWidth() / 2, Display.getHeight() / 2, Display.getWidth() / 3,
 					2 * Display.getHeight() / 3, true);
 			BoxDrawer.enableCollision();
 		}
 	}
 
+	public static void closeMenu() {
+		menu = false;
+	}
+
+	public static int getTableColumn() {
+		return tableColumn;
+	}
+
+	public static int getTableRow() {
+		return tableRow;
+	}
+
 	public static void main(String[] args) {
 		Engine.init("Tabular", 60);
-
-		int width = Command.getWindowWidth();
-		int height = Command.getWindowHeight();
-		if (width < 0 || height < 0)
-			Display.createFullscreen();
-		else
-			Display.createWindowed(width, height);
 		Engine.start(new AsciiTabular());
 	}
 
