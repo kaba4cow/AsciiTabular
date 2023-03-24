@@ -52,8 +52,7 @@ public final class Commands {
 			public void execute(String[] parameters, int numParameters, StringBuilder output) {
 				if (AsciiTabular.project == null)
 					output.append("No project selected\n");
-				else if (TableFile.write(AsciiTabular.project,
-						Console.getDirectory().getAbsolutePath() + "/" + AsciiTabular.projectName))
+				else if (AsciiTabular.saveProject())
 					output.append("Project saved\n");
 				else
 					output.append("Could not save the project\n");

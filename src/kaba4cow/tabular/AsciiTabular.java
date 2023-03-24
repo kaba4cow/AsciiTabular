@@ -16,6 +16,7 @@ import kaba4cow.ascii.toolbox.Colors;
 import kaba4cow.ascii.toolbox.files.TableFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.tools.Table;
+import kaba4cow.console.Console;
 import kaba4cow.console.ConsoleProgram;
 
 public class AsciiTabular extends ConsoleProgram implements MainProgram {
@@ -34,6 +35,8 @@ public class AsciiTabular extends ConsoleProgram implements MainProgram {
 	private static int newTableColumn = -1;
 	private static int newTableRow = -1;
 	private static boolean menu = false;
+
+	private static float saveTime = 1f;
 
 	private GUIFrame menuFrame;
 
@@ -56,10 +59,12 @@ public class AsciiTabular extends ConsoleProgram implements MainProgram {
 		if (table == null)
 			updateConsole(projectName);
 		else
-			updateGUI();
+			updateGUI(dt);
 	}
 
-	public void updateGUI() {
+	public void updateGUI(float dt) {
+		saveTime += dt;
+
 		if (Keyboard.isKeyDown(Keyboard.KEY_ESCAPE)) {
 			if (menu)
 				menu = false;
@@ -67,12 +72,18 @@ public class AsciiTabular extends ConsoleProgram implements MainProgram {
 				tableColumn = -1;
 				tableRow = -1;
 				table = null;
+				saveTime = 1f;
 			}
 			return;
 		}
 
 		if (Mouse.isKeyDown(Mouse.RIGHT))
 			menu = !menu;
+
+		if (Keyboard.isKeyDown(Keyboard.KEY_S) && Keyboard.isKey(Keyboard.KEY_CONTROL_LEFT)) {
+			saveProject();
+			saveTime = 0f;
+		}
 
 		if (menu) {
 			menuFrame.update();
@@ -179,9 +190,12 @@ public class AsciiTabular extends ConsoleProgram implements MainProgram {
 
 		Drawer.fillRect(0, 0, Display.getWidth(), 5, false, Glyphs.SPACE, consoleColor);
 		Drawer.drawLine(0, 5, Display.getWidth(), 5, Glyphs.BOX_DRAWINGS_DOUBLE_HORIZONTAL, consoleColor);
-		Drawer.drawString(0, 0, false,
-				"TABLE [" + table.getName() + "] : " + table.columns() + " COLUMNS " + table.rows() + " ROWS",
-				consoleColor);
+		if (saveTime < 1f)
+			Drawer.drawString(0, 0, false, "PROJECT SAVED", consoleColor);
+		else
+			Drawer.drawString(0, 0, false,
+					"TABLE [" + table.getName() + "] : " + table.columns() + " COLUMNS " + table.rows() + " ROWS",
+					consoleColor);
 
 		x = -scrollX;
 		for (int i = 0; i < columns.size(); i++) {
@@ -222,6 +236,10 @@ public class AsciiTabular extends ConsoleProgram implements MainProgram {
 
 	public static void closeMenu() {
 		menu = false;
+	}
+
+	public static boolean saveProject() {
+		return TableFile.write(project, Console.getDirectory().getAbsolutePath() + "/" + projectName);
 	}
 
 	public static int getTableColumn() {
