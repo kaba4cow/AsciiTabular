@@ -171,13 +171,13 @@ public class AsciiTabular extends ConsoleProgram implements MainProgram {
 			x = -scrollX;
 			y += 2;
 			for (int i = 0; i < columns.size(); i++) {
-				int width = 2 + Maths.max(table.getColumnWidth(i), table.getColumn(i).length() / 2);
+				int width = 4 + Maths.max(table.getColumnWidth(i), table.getColumn(i).length() / 2);
 				if (i >= item.size())
 					item.add("");
 				int textColor = (i == tableColumn && j == tableRow) ? Colors.swap(consoleColor) : consoleColor;
 				BoxDrawer.drawBox(x, y, width, 2, true, consoleColor);
 				Drawer.drawLine(x + 1, y + 1, x + width - 1, y + 1, ' ', textColor);
-				Drawer.drawString(x + 1, y + 1, false, item.get(i), textColor);
+				Drawer.drawString(x + 1, y + 1, false, "<" + item.get(i) + ">", textColor);
 
 				if (mY > 4 && mY == y + 1 && mX > x && mX < x + width) {
 					newTableColumn = i;
@@ -199,11 +199,11 @@ public class AsciiTabular extends ConsoleProgram implements MainProgram {
 
 		x = -scrollX;
 		for (int i = 0; i < columns.size(); i++) {
-			int width = 2 + Maths.max(table.getColumnWidth(i), table.getColumn(i).length() / 2);
+			int width = 4 + Maths.max(table.getColumnWidth(i), table.getColumn(i).length() / 2);
 			int textColor = (tableRow == -1 && i == tableColumn) ? Colors.swap(consoleColor) : consoleColor;
 			BoxDrawer.drawBox(x, 1, width, 3, false, consoleColor);
 			Drawer.fillRect(x + 1, 2, width - 1, 2, false, Glyphs.SPACE, textColor);
-			Drawer.drawString(x + 1, 2, false, width - 1, table.getColumn(i), textColor);
+			Drawer.drawString(x + 1, 2, false, width - 1, "<" + table.getColumn(i) + ">", textColor);
 
 			if (mY >= 2 && mY <= 3 && mX > x && mX < x + width) {
 				newTableRow = -1;
