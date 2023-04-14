@@ -3,15 +3,13 @@ package kaba4cow.tabular;
 import java.util.LinkedList;
 
 import kaba4cow.ascii.MainProgram;
-import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.core.Engine;
+import kaba4cow.ascii.core.Input;
+import kaba4cow.ascii.core.Window;
 import kaba4cow.ascii.drawing.drawers.BoxDrawer;
 import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
-import kaba4cow.ascii.input.Input;
-import kaba4cow.ascii.input.Keyboard;
-import kaba4cow.ascii.input.Mouse;
 import kaba4cow.ascii.toolbox.Colors;
 import kaba4cow.ascii.toolbox.files.TableFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
@@ -65,7 +63,7 @@ public class AsciiTabular extends ConsoleProgram implements MainProgram {
 	public void updateGUI(float dt) {
 		saveTime += dt;
 
-		if (Keyboard.isKeyDown(Keyboard.KEY_ESCAPE)) {
+		if (Input.isKeyDown(Input.KEY_ESCAPE)) {
 			if (menu)
 				menu = false;
 			else {
@@ -77,19 +75,19 @@ public class AsciiTabular extends ConsoleProgram implements MainProgram {
 			return;
 		}
 
-		if (Mouse.isKeyDown(Mouse.RIGHT))
+		if (Input.isButtonDown(Input.RIGHT))
 			menu = !menu;
 
-		if (Keyboard.isKeyDown(Keyboard.KEY_S) && Keyboard.isKey(Keyboard.KEY_CONTROL_LEFT)) {
+		if (Input.isKeyDown(Input.KEY_S) && Input.isKey(Input.KEY_CONTROL_LEFT)) {
 			saveProject();
 			saveTime = 0f;
 		}
 
 		if (menu) {
 			menuFrame.update();
-			if (Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
+			if (Input.isKeyDown(Input.KEY_ESCAPE))
 				menu = false;
-		} else if (Mouse.isKeyDown(Mouse.LEFT)) {
+		} else if (Input.isButtonDown(Input.LEFT)) {
 			tableColumn = newTableColumn;
 			tableRow = newTableRow;
 		}
@@ -100,22 +98,19 @@ public class AsciiTabular extends ConsoleProgram implements MainProgram {
 				string = table.getColumn(tableColumn);
 			else
 				string = table.getCell(tableColumn, tableRow);
-			if (Keyboard.isKeyDown(Keyboard.KEY_DELETE))
-				string = "";
-			else
-				string = Input.typeString(string);
+			string = Input.typeString(string);
 			if (tableRow == -1)
 				table.setColumn(tableColumn, string);
 			else
 				table.setCell(tableColumn, tableRow, string);
 
-			if (Keyboard.isKeyDown(Keyboard.KEY_UP))
+			if (Input.isKeyDown(Input.KEY_UP))
 				tableRow--;
-			else if (Keyboard.isKeyDown(Keyboard.KEY_DOWN))
+			else if (Input.isKeyDown(Input.KEY_DOWN))
 				tableRow++;
-			else if (Keyboard.isKeyDown(Keyboard.KEY_LEFT))
+			else if (Input.isKeyDown(Input.KEY_LEFT))
 				tableColumn--;
-			else if (Keyboard.isKeyDown(Keyboard.KEY_RIGHT))
+			else if (Input.isKeyDown(Input.KEY_RIGHT))
 				tableColumn++;
 
 			if (tableRow < -1)
@@ -127,10 +122,10 @@ public class AsciiTabular extends ConsoleProgram implements MainProgram {
 		}
 
 		if (!menu) {
-			if (Keyboard.isKey(Keyboard.KEY_SHIFT_LEFT))
-				scrollX -= 6 * Mouse.getScroll();
+			if (Input.isKey(Input.KEY_SHIFT_LEFT))
+				scrollX -= 6 * Input.getScroll();
 			else
-				scrollY -= 3 * Mouse.getScroll();
+				scrollY -= 3 * Input.getScroll();
 
 			if (scrollX < 0)
 				scrollX = 0;
@@ -153,13 +148,13 @@ public class AsciiTabular extends ConsoleProgram implements MainProgram {
 	}
 
 	public void renderGUI() {
-		Display.setDrawCursor(true);
+		Window.setDrawCursor(true);
 
 		LinkedList<String> columns = table.getColumns();
 		LinkedList<Table.Row> rows = table.getRows();
 
-		int mX = Mouse.getTileX();
-		int mY = Mouse.getTileY();
+		int mX = Input.getTileX();
+		int mY = Input.getTileY();
 
 		newTableColumn = -1;
 		newTableRow = -1;
@@ -188,8 +183,8 @@ public class AsciiTabular extends ConsoleProgram implements MainProgram {
 			}
 		}
 
-		Drawer.fillRect(0, 0, Display.getWidth(), 5, false, Glyphs.SPACE, consoleColor);
-		Drawer.drawLine(0, 5, Display.getWidth(), 5, Glyphs.BOX_DRAWINGS_DOUBLE_HORIZONTAL, consoleColor);
+		Drawer.fillRect(0, 0, Window.getWidth(), 5, false, Glyphs.SPACE, consoleColor);
+		Drawer.drawLine(0, 5, Window.getWidth(), 5, Glyphs.BOX_DRAWINGS_DOUBLE_HORIZONTAL, consoleColor);
 		if (saveTime < 1f)
 			Drawer.drawString(0, 0, false, "PROJECT SAVED", consoleColor);
 		else
@@ -214,22 +209,22 @@ public class AsciiTabular extends ConsoleProgram implements MainProgram {
 		}
 
 		x += scrollX;
-		if (x < Display.getWidth())
+		if (x < Window.getWidth())
 			maxScrollX = 0;
 		else
-			maxScrollX = x + 2 - Display.getWidth();
+			maxScrollX = x + 2 - Window.getWidth();
 
 		y += scrollY;
-		if (y < Display.getHeight())
+		if (y < Window.getHeight())
 			maxScrollY = 0;
 		else
-			maxScrollY = y + 6 - Display.getHeight();
+			maxScrollY = y + 6 - Window.getHeight();
 
 		if (menu) {
 			BoxDrawer.disableCollision();
 			menuFrame.setColor(consoleColor);
-			menuFrame.render(Display.getWidth() / 2, Display.getHeight() / 2, Display.getWidth() / 3,
-					2 * Display.getHeight() / 3, true);
+			menuFrame.render(Window.getWidth() / 2, Window.getHeight() / 2, Window.getWidth() / 3,
+					2 * Window.getHeight() / 3, true);
 			BoxDrawer.enableCollision();
 		}
 	}
