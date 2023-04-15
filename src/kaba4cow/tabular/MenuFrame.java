@@ -2,9 +2,9 @@ package kaba4cow.tabular;
 
 import java.util.function.Consumer;
 
-import kaba4cow.ascii.drawing.glyphs.Glyphs;
-import kaba4cow.ascii.drawing.gui.GUIButton;
-import kaba4cow.ascii.drawing.gui.GUIFrame;
+import kaba4cow.ascii.drawing.Glyphs;
+import kaba4cow.ascii.gui.GUIButton;
+import kaba4cow.ascii.gui.GUIFrame;
 import kaba4cow.ascii.toolbox.files.TableFile;
 import kaba4cow.ascii.toolbox.tools.TableSorter;
 import kaba4cow.console.Console;
